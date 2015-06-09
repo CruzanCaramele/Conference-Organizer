@@ -67,6 +67,12 @@ CONF_GET_REQUEST = endpoints.ResourceContainer(
     websafeConferenceKey=messages.StringField(1),
 )
 
+CONF_POST_REQUEST = endpoints.ResourceContainer(
+    ConferenceForm,
+    websafeConferenceKey=messages.StringField(1),
+)
+
+
 @endpoints.api( name='conference',
                 version='v1',
                 allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID],
@@ -393,7 +399,23 @@ class ConferenceApi(remote.Service):
         return self._conferenceRegistration(request)
 
 
+    @endpoints.method(message_types.VoidMessage, ConferenceForms,
+            path='conferences/attending',
+            http_method='GET', name='getConferencesToAttend')
+    def getConferencesToAttend(self, request):
+        """Get list of conferences that user has registered for."""
+        # step 1: get user profile
+        prof = self._getProfileFromUser()
+        # step 2: get conferenceKeysToAttend from profile.
+        # to make a ndb key from websafe key you can use:
+        conf_keys = [ndb.Key(urlsafe=wsck) for wsck in prof.conferenceKeysToAttend]
+        # step 3: fetch conferences from datastore. 
+        conferences = ndb.get_multi(conf_keys)
 
+        # return set of ConferenceForm objects per Conference
+        return ConferenceForms(items=[self._copyConferenceToForm(conf, "")\
+         for conf in conferences]
+        )
 
 
 # registers API
