@@ -6,8 +6,6 @@ server-side Python App Engine API;
 
 """
 
-__author__ = 'wesc+api@google.com (Wesley Chun)'
-
 
 from datetime import datetime
 
