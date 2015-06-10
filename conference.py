@@ -38,6 +38,8 @@ from settings import WEB_CLIENT_ID
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
+ANNOUNCEMENT_TPL = ('Last chance to attend! The following conferences '
+                    'are nearly sold out: %s')
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -498,9 +500,7 @@ class ConferenceApi(remote.Service):
         if confs:
             # If there are almost sold out conferences,
             # format announcement and set it in memcache
-            announcement = '%s %s' % (
-                'Last chance to attend! The following conferences '
-                'are nearly sold out:',
+            announcement = ANNOUNCEMENT_TPL % (
                 ', '.join(conf.name for conf in confs))
             memcache.set(MEMCACHE_ANNOUNCEMENTS_KEY, announcement)
         else:
@@ -517,8 +517,6 @@ class ConferenceApi(remote.Service):
             http_method='GET', name='getAnnouncement')
     def getAnnouncement(self, request):
         """Return Announcement from memcache."""
-        # return an existing announcement from Memcache or an empty string.
-        announcement = ""
-        return StringMessage(data=memcache.get(MEMCACHE_ANNOUNCEMENTS_KEY) or announcement)
+        return StringMessage(data=memcache.get(MEMCACHE_ANNOUNCEMENTS_KEY) or "")
 
 api = endpoints.api_server([ConferenceApi]) # register API
