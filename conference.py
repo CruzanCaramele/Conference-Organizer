@@ -410,8 +410,17 @@ class ConferenceApi(remote.Service):
         # step 3: fetch conferences from datastore. 
         conferences = ndb.get_multi(conf_keys)
 
+        # get organizers
+        organisers = [ndb.Key(Profile, conf.organizerUserId) for conf in conferences]
+        profiles = ndb.get_multi(organisers)
+
+        # put display names in a dict for easier fetching
+        names = {}
+        for profile in profiles:
+            names[profile.key.id()] = profile.displayName
+
         # return set of ConferenceForm objects per Conference
-        return ConferenceForms(items=[self._copyConferenceToForm(conf, "")\
+        return ConferenceForms(items=[self._copyConferenceToForm(conf, names[conf.organizerUserId])\
          for conf in conferences]
         )
 
