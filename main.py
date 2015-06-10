@@ -7,8 +7,9 @@ from conference import ConferenceApi
 class SetAnnouncementHandler(webapp2.RequestHandler):
     def get(self):
         """Set Announcement in Memcache."""
-        # TODO 1
         # use _cacheAnnouncement() to set announcement in Memcache
+        ConferenceApi._cacheAnnouncement()
+        self.response.set_status(204)
 
 app = webapp2.WSGIApplication([
     ('/crons/set_announcement', SetAnnouncementHandler),
