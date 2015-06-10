@@ -40,6 +40,9 @@ handlers:       # static then dynamic
 
 libraries:
 
+- name: webapp2
+  version: latest
+
 - name: endpoints
   version: latest
 
