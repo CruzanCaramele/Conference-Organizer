@@ -1,4 +1,4 @@
-App Engine application for the Udacity training course.
+Visit the application at this [link][7]
 
 ## Products
 - [App Engine][1]
@@ -31,3 +31,4 @@ App Engine application for the Udacity training course.
 [4]: https://console.developers.google.com/
 [5]: https://localhost:8080/
 [6]: https://developers.google.com/appengine/docs/python/endpoints/endpoints_tool
+[7]: https://amiable-hour-95808.appspot.com 
