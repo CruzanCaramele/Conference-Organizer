@@ -151,6 +151,10 @@ class ConferenceApi(remote.Service):
         # creation of Conference & return (modified) ConferenceForm
         Conference(**data).put()
         # TODO 2: add confirmation email sending task to queue
+        taskqueue.add(params={'email': user.email(),
+            'conferenceInfo': repr(request)},
+            url='/tasks/send_confirmation_email'
+        )
 
         return request
 
@@ -517,6 +521,9 @@ class ConferenceApi(remote.Service):
             http_method='GET', name='getAnnouncement')
     def getAnnouncement(self, request):
         """Return Announcement from memcache."""
-        return StringMessage(data=memcache.get(MEMCACHE_ANNOUNCEMENTS_KEY) or "")
+        announcement =memcache.get(MEMCACHE_ANNOUNCEMENTS_KEY) 
+        if not announcement:
+            announcement = ""
+        return StringMessage(data=announcement)
 
 api = endpoints.api_server([ConferenceApi]) # register API
