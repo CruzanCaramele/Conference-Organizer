@@ -36,10 +36,10 @@ Visit the application at this [link][7]
 
 
 ## Session Design Choices
-In this design, Profile is an ancestor of both Sessions and Conference.
-A **Session** is a child of Conference, querying by ancestor is then made possible to get all child elements. 
-Within the **Session** model, **speaker** is defined as a string to simplify filtering.
-**typeOfSession** was defined in the model as a repeated property.This allows for multiple session types. 
-**startTime** was defined as a **TimeProperty** instead of **DateProperty** to keep entries to 24 hour time and allow for proper filtering.
+- In this design, Profile is an ancestor of both Sessions and Conference.
+- A **Session** is a child of Conference, querying by ancestor is then made possible to get all child elements. 
+- Within the **Session** model, **speaker** is defined as a string to simplify filtering.
+- **typeOfSession** was defined in the model as a repeated property.This allows for multiple session types. 
+- **startTime** was defined as a **TimeProperty** instead of **DateProperty** to keep entries to 24 hour time and allow for proper filtering.
 
 
