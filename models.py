@@ -89,6 +89,45 @@ class StringMessage(messages.Message):
     data = messages.StringField(1, required=True)
 
 
+class Session(ndb.Model):
+    """Session ---- Session object"""
+    highlights = ndb.StringProperty()
+    speaker = ndb.StringProperty()
+    duration  = ndb.IntegerProperty()
+    date = ndb.DateProperty()
+    startTime = ndb.TimeProperty()
+    typeOfSession = ndb.StringProperty(repeated=True)
+    name = ndb.StringProperty(required=True)
+
+class SessionForm(messages.Message):
+    """Session Form -- form message outbound"""
+    speaker = messages.StringField(3)
+    typeOfSession          = messages.StringField(4, repeated=True)
+    duration            = messages.IntegerField(5)
+    date       = messages.StringField(6)
+    startTime           = messages.StringField(7)
+    confwebsafeKey      = messages.StringField(8)
+    name            = messages.StringField(1)
+    highlights     = messages.StringField(2)
+
+
+class SessionForms(messages.Message):
+    """SessionForms multiples outbound"""
+    items = messages.MessageField(SessionForm, 1, repeated=True)
+
+class SessionQuery(messages.Message):
+    """ Session query inbound form message"""
+    websafeConferenceKey = messages.StringField(1)
+
+class SessionQuerySpeaker(messages.Message):
+    """Session query inbound form message"""
+    speaker = messages.StringField(1)
+
+class SessionQueryType(messages.Message):
+    """Session query inbound form message"""
+    typeOfSession = messages.StringField(1)
+    websafeConferenceKey = messages.StringField(2)
+
 
 class TeeShirtSize(messages.Enum):
     """TeeShirtSize -- t-shirt size enumeration value"""
