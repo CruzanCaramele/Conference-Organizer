@@ -30,6 +30,15 @@ from models import ConferenceQueryForm
 from models import ConferenceQueryForms
 from models import TeeShirtSize
 from models import StringMessage
+from models import Session 
+from models import SessionForm
+from models import SessionForms
+from models import SessionQuery
+from models import SessionQueryType
+from models import SessionQuerySpeaker
+
+
+
 
 from utils import getUserId
 
@@ -65,6 +74,10 @@ FIELDS =    {
             'MONTH': 'month',
             'MAX_ATTENDEES': 'maxAttendees',
             }
+
+S_DEFAULTS = {
+    "typeOfSession": ["Workshop", "Lecture"],
+}
 
 CONF_GET_REQUEST = endpoints.ResourceContainer(
     message_types.VoidMessage,
@@ -525,5 +538,59 @@ class ConferenceApi(remote.Service):
         if not announcement:
             announcement = ""
         return StringMessage(data=announcement)
+
+
+
+# - - - Sessions - - - - - - - - - - - - - - - - - - - -
+    @endpoints.method(SessionQuery, SessionForms, path="sessionQuery",
+            http_method="GET", name="getConferenceSessions")
+    def getConferenceSessions(self, request):
+        """Returns sessions of a given conference"""
+        if not request.websafeConferenceKey:
+            raise endpoints.ForbiddenException("websafeConferenceKey is required.")
+
+        #parent key
+        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
+
+        #ancestral session query
+        q = Session.query(ancestor=conf.key).fetch()
+        return SessionForms(items=[self._transferSessionToForm(sesh) for sesh in q])
+
+
+    @endpoints.method(SessionQueryType, SessionForms, path='queryType',
+            http_method='GET', name='getConferenceSessionsByType')
+    def getConferenceSessionsByType(self, request):
+        """Get session by typeOfSession."""
+        if not request.websafeConferenceKey:
+            raise endpoints.ForbiddenException('websafeConferenceKey is required.')
+
+        if not request.typeOfSession:
+            raise endpoints.ForbiddenException('typeOfSession is required.')
+
+        #parent key
+        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
+
+        # filter by typeOfSession after querying session by ancestor
+        q = Session.query(ancestor=conf.key).filter(Session.typeOfSession == request.typeOfSession)
+
+        return SessionForms(items=[self._transferSessionToForm(sesh) for sesh in q])
+
+
+
+# - - - Session objects - - - - - - - - - - - - - - - - -
+def _transferSessionToForm(self, sesh):
+    """get fields required into SessionForm from Session"""
+    seshForm = SessionForm()
+
+    for field in seshForm.all_fields():
+        if hasattr(sesh, field.name):
+            if field.name.endswith('date') or field.name.endswith('Time'):
+                setattr(seshForm, field.name, str(getattr(sesh, field.name)))
+            else:
+                setattr(seshForm, field.name, getattr(sesh, field.name))
+    seshForm.check_initialized()
+
+    return seshForm
+
 
 api = endpoints.api_server([ConferenceApi]) # register API
