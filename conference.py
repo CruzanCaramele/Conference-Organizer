@@ -576,6 +576,29 @@ class ConferenceApi(remote.Service):
         return SessionForms(items=[self._transferSessionToForm(sesh) for sesh in q])
 
 
+    @endpoints.method(endpoints.ResourceContainer(
+        speaker=messages.StringField(1)), SessionForms,
+            path='session/{speaker}',
+            http_method='GET', name='getSessionsBySpeaker')
+    def getSessionsBySpeaker(self, request):
+        """Given a speaker, return all sessions given by this particular speaker, across all conferences"""
+        # query session
+        q = Session.query()
+
+        #filter by speaker
+        q = Session.query(Session.speaker == request.speaker)
+
+        return SessionForms(
+            items=[self._transferSessionToForm(sesh) for sesh in q]
+        )
+
+    @endpoints.method(SessionForm, SessionForm, path='session',
+            http_method='POST', name='createSession')
+    def createSession(self, request):
+        """Create new session. open only to the organizer of the conference"""
+        return self._createSessionObject(request)
+
+
 
 # - - - Session objects - - - - - - - - - - - - - - - - -
 def _transferSessionToForm(self, sesh):
@@ -591,6 +614,51 @@ def _transferSessionToForm(self, sesh):
     seshForm.check_initialized()
 
     return seshForm
+
+    def _createSessionObject(self, request):
+        """Create Session object, returning SessionForm/request."""
+        # check auth
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # copy SessionForm into dict
+        data = {field.name: getattr(request, field.name) for field in request.all_fields()}
+        user_id = getUserId(user)
+        conf = ndb.Key(urlsafe=data['confwebsafeKey']).get()
+
+        if not request.name:
+            raise endpoints.BadRequestException("Session 'name' field required")
+
+
+        # add default values for those missing (both data model & outbound Message)
+        for df in S_DEFAULTS:
+            if data[df] in (None, []):
+                data[df] = S_DEFAULTS[df]
+                setattr(request, df, S_DEFAULTS[df])
+
+        # add date and time
+        if data['startTime']:
+            data['startTime'] = datetime.strptime(data['startTime'], "%H:%M").time()
+        if data['date']:
+            data['date'] = datetime.strptime(data['date'][:10], "%Y-%m-%d").date()
+
+        # generate session key from conference key
+        p_key = conf.key
+        c_id = Session.allocate_ids(size=1, parent=p_key)[0]
+        c_key = ndb.Key(Session, c_id, parent=p_key)
+        data['key'] = c_key
+        if not data['speaker']:
+            data['speaker'] = user.nickname()
+        del data['confwebsafeKey']
+
+        # if speaker has more than 1 session, add to featured speaker memcache
+        q = Session.query().filter(Session.speaker == data['speaker']).count()
+        if q > 1:
+            taskqueue.add(params={'speaker': data['speaker']}, url='/tasks/set_featured_speaker')
+
+        Session(**data).put()
+        return request
 
 
 api = endpoints.api_server([ConferenceApi]) # register API
