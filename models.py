@@ -9,6 +9,15 @@ import endpoints
 from protorpc import messages
 from google.appengine.ext import ndb
 
+class Session(ndb.Model):
+    """Session ---- Session object"""
+    highlights = ndb.StringProperty()
+    speaker = ndb.StringProperty()
+    duration  = ndb.IntegerProperty()
+    date = ndb.DateProperty()
+    startTime = ndb.TimeProperty()
+    typeOfSession = ndb.StringProperty(repeated=True)
+    name = ndb.StringProperty(required=True)
 
 class Profile(ndb.Model):
     """Profile -- User profile object"""
@@ -90,15 +99,7 @@ class StringMessage(messages.Message):
     data = messages.StringField(1, required=True)
 
 
-class Session(ndb.Model):
-    """Session ---- Session object"""
-    highlights = ndb.StringProperty()
-    speaker = ndb.StringProperty()
-    duration  = ndb.IntegerProperty()
-    date = ndb.DateProperty()
-    startTime = ndb.TimeProperty()
-    typeOfSession = ndb.StringProperty(repeated=True)
-    name = ndb.StringProperty(required=True)
+
 
 class SessionForm(messages.Message):
     """Session Form -- form message outbound"""
