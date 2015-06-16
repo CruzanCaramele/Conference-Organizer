@@ -89,6 +89,11 @@ CONF_POST_REQUEST = endpoints.ResourceContainer(
     websafeConferenceKey=messages.StringField(1),
 )
 
+THE_WISHLIST_POST_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeSessionKey=messages.StringField(1, required=True),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -659,6 +664,60 @@ def _transferSessionToForm(self, sesh):
 
         Session(**data).put()
         return request
+
+
+#--------Sessions to User WishList--------------------------------------
+    @endpoints.method(THE_WISHLIST_POST_REQUEST, SessionForm,
+            http_method='POST', name='addSessionToWishlist')
+    def addSessionToWishlist(self, request):
+        """adds the session to the user's list of sessions they are interested in attending"""
+
+        # preload necessary data items
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+        
+        # get then verify session
+        session = ndb.Key(urlsafe=request.websafeSessionKey).get()
+
+        # verify  session exists
+        if not session:
+            raise endpoints.NotFoundException(
+                'No session found with key: %s' % request.websafeSessionKey)
+
+        # get profile
+        prof = self._getProfileFromUser()
+
+        # check if session already added to wishlist
+        if session.key in prof.AttendingSessions:
+            raise endpoints.BadRequestException(
+                'Session already saved to wishlist: %s' % request.websafeSessionKey)
+
+        # append to user profile's wishlist
+        prof.AttendingSessions.append(session.key)
+        prof.put()
+
+        return self._transferSessionToForm(sesh)
+
+
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+            http_method='POST', name='getSessionsInWishlist')
+    def getSessionsInWishlist(self, request):
+        """Returns a user's wishlist of sessions"""
+        # preload necessary data items
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # fetch profile and wishlist
+        prof = self._getProfileFromUser()
+        session_keys = prof.AttendingSessions
+        sessions = [session_key.get() for session_key in session_keys]
+
+        # return set
+        return SessionForms(
+            items=[self._transferSessionToForm(sesh) for sesh in sessions]
+        )
 
 
 api = endpoints.api_server([ConferenceApi]) # register API
