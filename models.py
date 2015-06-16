@@ -16,6 +16,7 @@ class Profile(ndb.Model):
     mainEmail = ndb.StringProperty()
     teeShirtSize = ndb.StringProperty(default='NOT_SPECIFIED')
     conferenceKeysToAttend = ndb.StringProperty(repeated=True)
+    AttendingSessions = ndb.KeyProperty(Session, repeated=True)
 
 
 class BooleanMessage(messages.Message):
