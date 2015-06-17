@@ -42,10 +42,13 @@
 - **typeOfSession** was defined in the model as a repeated property.This allows for multiple session types. 
 - **startTime** was defined as a **TimeProperty** instead of **DateProperty** to keep entries to 24 hour time and allow for proper filtering.
 
-##Sessions to User Wishlist
+## Sessions to User Wishlist
 This is to enable users mark some sessions that they are interested in and retrieve their own current wishlist.
-- **AttendingSessions** is a repeated property key defined within the Profile model for accomodating a wishlist
 - **addSessionToWishlist** :adds the session to the user's list of sessions they are interested in attending
 - **getSessionsInWishlist**: return a user's wishlist.
 
+## Two Additional Queries
+**returnWishlistType**
+- This query returns all sessions on a user's wishlist of a certain type. 
+- Useful when a user has been to a few presentations and wanted to attend only workshops for the rest of the day.
 
