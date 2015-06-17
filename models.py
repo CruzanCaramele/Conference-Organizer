@@ -9,15 +9,7 @@ import endpoints
 from protorpc import messages
 from google.appengine.ext import ndb
 
-class Session(ndb.Model):
-    """Session ---- Session object"""
-    highlights = ndb.StringProperty()
-    speaker = ndb.StringProperty()
-    duration  = ndb.IntegerProperty()
-    date = ndb.DateProperty()
-    startTime = ndb.TimeProperty()
-    typeOfSession = ndb.StringProperty(repeated=True)
-    name = ndb.StringProperty(required=True)
+
 
 class Profile(ndb.Model):
     """Profile -- User profile object"""
@@ -25,7 +17,6 @@ class Profile(ndb.Model):
     mainEmail = ndb.StringProperty()
     teeShirtSize = ndb.StringProperty(default='NOT_SPECIFIED')
     conferenceKeysToAttend = ndb.StringProperty(repeated=True)
-    AttendingSessions = ndb.KeyProperty(Session, repeated=True)
 
 
 class BooleanMessage(messages.Message):
@@ -99,7 +90,16 @@ class StringMessage(messages.Message):
     data = messages.StringField(1, required=True)
 
 
-
+class Session(ndb.Model):
+    """Session ---- Session object"""
+    highlights = ndb.StringProperty()
+    speaker = ndb.StringProperty()
+    duration  = ndb.IntegerProperty()
+    date = ndb.DateProperty()
+    startTime = ndb.TimeProperty()
+    typeOfSession = ndb.StringProperty(repeated=True)
+    name = ndb.StringProperty(required=True)
+    
 
 class SessionForm(messages.Message):
     """Session Form -- form message outbound"""
@@ -130,6 +130,35 @@ class SessionQueryType(messages.Message):
     typeOfSession = messages.StringField(1)
     websafeConferenceKey = messages.StringField(2)
 
+class Wishlist(ndb.Model):
+    """Wishlist -- Wishlist object"""
+    sessionName            = ndb.StringProperty(required=True)
+    userId            = ndb.StringProperty()
+    sessionKey          = ndb.KeyProperty()
+    typeOfSession            = ndb.StringProperty(repeated=True)
+
+class WishlistForm(messages.Message):
+    """WishlistForm -- Wishlist outbound form message"""
+    sessionName          = messages.StringField(1)
+    userId            = messages.StringField(2)
+    sessionKey          = messages.StringField(3)
+    typeOfSession          = messages.StringField(4, repeated=True)
+
+class WishlistForms(messages.Message):
+    """WishlistForms -- multiple Wishlist outbound form message"""
+    items = messages.MessageField(WishlistForm, 1, repeated=True)
+
+class WishlistQuery(messages.Message):
+    """WishlistQueryForm -- WishlistQuery inbound form message"""
+    userId = messages.StringField(1)
+
+class WishlistSpeakerQuery(messages.Message):
+    """WishlistQueryForm -- WishlistQuery inbound form message"""
+    speaker = messages.StringField(1)
+
+class WishlistTypeQuery(messages.Message):
+    """WishlistQueryForm -- WishlistQuery inbound form message"""
+    typeOfSession = messages.StringField(1)
 
 class TeeShirtSize(messages.Enum):
     """TeeShirtSize -- t-shirt size enumeration value"""
