@@ -543,7 +543,7 @@ class ConferenceApi(remote.Service):
     @endpoints.method(WishlistTypeQuery, WishlistForms, path='wishlistTypeQuery',
             http_method='GET', name='returnWishlistType')
     def returnWishlistType(self, request):
-        """Get wishlist by type."""
+        """Return whislist by type."""
 
         # check authentication
         user = endpoints.get_current_user()
@@ -559,6 +559,33 @@ class ConferenceApi(remote.Service):
         q = q.filter(Wishlist.typeOfSession == request.typeOfSession)
 
         return WishlistForms(items=[self._copyWishlistToForm(wish) for wish in q])
+
+    @endpoints.method(WishlistSpeakerQuery, WishlistForms, path='wishlistSpeakerQuery',
+            http_method='GET', name='returnWishlistSpeaker')
+    def returnWishlistSpeaker(self, request):
+        """Given a speaker, return the wishlist by the speaker."""
+
+        # verify authentication
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # obtain userId
+        user_id = getUserId(user)
+
+        # query session, filter by speaker
+        q = Session.query().filter(Session.speaker == request.speaker)
+
+        # query wishlist, filter by userId
+        p = Wishlist.query().filter(Wishlist.userId == user_id)
+
+        a = []
+        for s in q:
+            for w in p:
+                if s.key == w.sessionKey:
+                    a.append(w)
+
+        return WishlistForms(items=[self._copyWishlistToForm(wish) for wish in a])
 
 
 # - - - Profile objects - - - - - - - - - - - - - - - - - - -
@@ -763,6 +790,31 @@ class ConferenceApi(remote.Service):
     def unregisterFromConference(self, request):
         """Unregister user for selected conference."""
         return self._conferenceRegistration(request, reg=False)
+
+
+
+#----------QueryProblem---------------------------
+    @endpoints.method(SessionQuery, SessionForms, path='sessionProblemQuery',
+            http_method='GET', name='problematicQuery')
+    def problematicQuery(self, request):
+        """Handle query for all non-workshop sessions before 7 pm."""
+
+        if not request.websafeConferenceKey:
+            raise endpoints.ForbiddenException('Requires websafeConferenceKey.')
+
+        #24hr format
+        time_is_now = datetime.strptime('19:00:00', "%H:%M:%S").time()
+        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
+
+        query_sesh = Session.query(ancestor=conf.key).\
+            filter(Session.startTime <= time_is_now)
+
+        list_loader = []
+        for stuff in query_sesh:
+            if "Workshop" not in stuff.typeOfSession:
+                list_loader.append(stuff)
+
+        return SessionForms(items=[self._transferSessionToForm(sesh) for sesh in list_loader])
 
 
 
