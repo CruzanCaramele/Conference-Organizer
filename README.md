@@ -52,3 +52,14 @@ This is to enable users mark some sessions that they are interested in and retri
 - This query returns all sessions on a user's wishlist of a certain type. 
 - Useful when a user has been to a few presentations and wanted to attend only workshops for the rest of the day.
 
+**returnWishlistSpeaker**
+- Given a user's wishlist, this query will return sessions by the same speaker.
+- this allows users to see more sessions from a specific speaker that they have already seen in the past which they like.
+
+## Query Problem
+The problem with trying to query for sessions that are both before 7pm and are not workshops is that the app engine does not allow for two inequality filters to be applied to two seperate properties in one query. In getConferenceSessionsProblem, at first I queried only for sessions before 7pm and then tried to delete results that weren't workshops, but the Query object doesn't allow for deletion. Ultimately I iterated over the time query results and used - 'workshop' not in - to find the results I actually wanted and pass them to a new array
+
+- Keeping in mind that the google app engine forbids 2 inequality filters to be implemented to 2 different properties in a single query, this causes a problem in attempting to query for sessions that are not workshops and before 7pm.
+- I created the **problematicQuery** method to handle this problem by first querying for sessions that occur before 7pm in ** query_sesh = Session.query(ancestor=conf.key).filter(Session.startTime <= time_is_now**
+- I then used a for loop to iterate over the **query_sesh**,  then check if **Workshop** is not found .
+- Whenever **Workshop** is not found, the result is appended to an empty list as in ** list_loader.append(stuff)**
