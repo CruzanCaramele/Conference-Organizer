@@ -42,10 +42,12 @@
 - **typeOfSession** was defined in the model as a repeated property.This allows for multiple session types. 
 - **startTime** was defined as a **TimeProperty** instead of **DateProperty** to keep entries to 24 hour time and allow for proper filtering.
 
+
 ## Sessions to User Wishlist
 This is to enable users mark some sessions that they are interested in and retrieve their own current wishlist.
 - **addSessionToWishlist** :adds the session to the user's list of sessions they are interested in attending
 - **getSessionsInWishlist**: return a user's wishlist.
+
 
 ## Two Additional Queries
 **returnWishlistType**
@@ -56,9 +58,8 @@ This is to enable users mark some sessions that they are interested in and retri
 - Given a user's wishlist, this query will return sessions by the same speaker.
 - this allows users to see more sessions from a specific speaker that they have already seen in the past which they like.
 
-## Query Problem
-The problem with trying to query for sessions that are both before 7pm and are not workshops is that the app engine does not allow for two inequality filters to be applied to two seperate properties in one query. In getConferenceSessionsProblem, at first I queried only for sessions before 7pm and then tried to delete results that weren't workshops, but the Query object doesn't allow for deletion. Ultimately I iterated over the time query results and used - 'workshop' not in - to find the results I actually wanted and pass them to a new array
 
+## Query Problem
 - Keeping in mind that the google app engine forbids 2 inequality filters to be implemented to 2 different properties in a single query, this causes a problem in attempting to query for sessions that are not workshops and before 7pm.
 - I created the **problematicQuery** method to handle this problem by first querying for sessions that occur before 7pm in ** query_sesh = Session.query(ancestor=conf.key).filter(Session.startTime <= time_is_now**
 - I then used a for loop to iterate over the **query_sesh**,  then check if **Workshop** is not found .
