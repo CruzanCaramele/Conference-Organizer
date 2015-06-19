@@ -58,6 +58,7 @@ from settings import WEB_CLIENT_ID
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
+MEMCACHE_SPEAKER_KEY = "FEATURED_SPEAKER"
 ANNOUNCEMENT_TPL = ('Last chance to attend! The following conferences '
                     'are nearly sold out: %s')
 
@@ -816,6 +817,27 @@ class ConferenceApi(remote.Service):
 
         return SessionForms(items=[self._transferSessionToForm(sesh) for sesh in list_loader])
 
+
+#-------featuredSpeaker-------------------------------
+
+    @staticmethod
+    def _cacheFeaturedSpeaker(speaker):
+        """
+        Create featured speaker.
+        Assign to memcache.
+        """
+        featured_speaker = "Our featured Speaker for today is " + speaker
+        memcache.set(MEMCACHE_SPEAKER_KEY, featured_speaker)
+
+        return featured_speaker
+
+
+    @endpoints.method(message_types.VoidMessage, StringMessage,
+            path='sessions/featured/get',
+            http_method='GET', name='getFeaturedSpeaker')
+    def getFeaturedSpeaker(self, request):
+        """get Featured Speaker."""
+        return StringMessage(data=memcache.get(MEMCACHE_SPEAKER_KEY) or "")
 
 
 
