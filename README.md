@@ -63,4 +63,4 @@ This is to enable users mark some sessions that they are interested in and retri
 - Keeping in mind that the google app engine forbids 2 inequality filters to be implemented to 2 different properties in a single query, this causes a problem in attempting to query for sessions that are not workshops and before 7pm.
 - I created the **problematicQuery** method to handle this problem by first querying for sessions that occur before 7pm in ** query_sesh = Session.query(ancestor=conf.key).filter(Session.startTime <= time_is_now**
 - I then used a for loop to iterate over the **query_sesh**,  then check if **Workshop** is not found .
-- Whenever **Workshop** is not found, the result is appended to an empty list as in ** list_loader.append(stuff)**
+- Whenever **Workshop** is not found, the result is appended to an empty list as in - > list_loader.append(stuff)
