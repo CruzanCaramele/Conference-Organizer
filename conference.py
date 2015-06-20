@@ -400,12 +400,16 @@ class ConferenceApi(remote.Service):
             data['speaker'] = user.nickname()
         del data['confwebsafeKey']
 
-        # if speaker has more than 1 session, add to featured speaker memcache
-        q = Session.query().filter(Session.speaker == data['speaker']).count()
-        if q > 1:
-            taskqueue.add(params={'speaker': data['speaker']}, url='/tasks/set_featured_speaker')
+        # if speaker has more than 1 session, add to  memcache
+        sessions = Session.query(Session.speaker == data['speaker'],
+            ancestor=p_key)
+        if len(list(sessions)) > 1:
+            cache_data = {}
+            cache_data['speaker'] = data['speaker']
+            cache_data['sessionNames'] = [session.name for session in sessions]
+            if not memcache.set('featured_speaker', cache_data):
+                logging.error('Memcache set failed.')
 
-        Session(**data).put()
         return request
 
 # - - - Sessions - - - - - - - - - - - - - - - - - - - -
@@ -502,7 +506,7 @@ class ConferenceApi(remote.Service):
         c_key = ndb.Key(Wishlist, c_id, parent=p_key)
         data['key'] = c_key
 
-        # query wishlist, filter by userId and sessionName, then count
+        # query wishlist, filter by userId 
         q = Wishlist.query()
         q = q.filter(Wishlist.userId == user_id)
 
@@ -822,15 +826,32 @@ class ConferenceApi(remote.Service):
 #-------featuredSpeaker-------------------------------
 
     @staticmethod
-    def _cacheFeaturedSpeaker(speaker):
+    def _cacheFeaturedSpeaker(websafeConferenceKey, sessionId):
+        """Search for featured speaker.
         """
-        Create featured speaker.
-        Assign to memcache.
-        """
-        featured_speaker = "Our featured Speaker for today is " + speaker
-        memcache.set(MEMCACHE_SPEAKER_KEY, featured_speaker)
+        #  obtainthe conference
+        c= ndb.Key(urlsafe=websafeConferenceKey)
+        if c.kind() != 'Conference':
+            # raising an exception 
+            logging.error("invalid key here %s"  %websafeConferenceKey)
+            return
+        # verify existence of created session
+        session = Session.get_by_id(int(sessionId), parent=conf)
+        if not session:
+            logging.error("session id not found")
+            return
+        # check the speakers in the session
+        for speaker in session.speaker:
+            logging.info(speaker.urlsafe())
+            sessions = Session.query(Session.speaker == speaker).fetch(projection=[Session.name])
+            logging.info(len(sessions))
+            if len(sessions) > 1:
+                speaker = speaker.get()
+                feature =(speaker.name, ', '.join(sess.name for sess in sessions))
 
-        return featured_speaker
+                # memcaching
+                memcache.set(MEMCACHE_FEATUREDSPEAKER_KEY, feature)
+                return feature
 
 
     @endpoints.method(message_types.VoidMessage, StringMessage,
