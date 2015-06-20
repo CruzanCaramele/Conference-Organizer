@@ -697,10 +697,11 @@ class ConferenceApi(remote.Service):
             http_method='GET', name='getAnnouncement')
     def getAnnouncement(self, request):
         """Return Announcement from memcache."""
-        announcement =memcache.get(MEMCACHE_ANNOUNCEMENTS_KEY) 
+        announcement = memcache.get(MEMCACHE_ANNOUNCEMENTS_KEY)
         if not announcement:
-            announcement = ""
-        return StringMessage(data=announcement)
+            announcement = ANNOUNCEMENT_TPL+str(time.ctime())
+            memcache.set(MEMCACHE_ANNOUNCEMENTS_KEY, announcement)
+        return StringMessage(data=memcache.get(MEMCACHE_ANNOUNCEMENTS_KEY) or "")
 
 # - - - Registration - - - - - - - - - - - - - - - - - - - -
 
